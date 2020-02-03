@@ -1,0 +1,17 @@
+unit uOrder;
+
+interface
+uses  windows;
+const
+
+  //数据传输协议包头：
+  UID:integer=8888;//包头标识;
+  VER:integer=1003;
+  ENC:integer=7620;
+
+  CMD_TEST=1000;//测试；
+
+  CMD_READY=1001;//准备好命令;
+implementation
+
+end.

@@ -1,0 +1,13 @@
+object DataModule1: TDataModule1
+  OldCreateOrder = False
+  Height = 150
+  Width = 215
+  object cs1: TClientSocket
+    Active = False
+    Address = '127.0.0.1'
+    ClientType = ctNonBlocking
+    Port = 6010
+    Left = 88
+    Top = 56
+  end
+end

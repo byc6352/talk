@@ -1,0 +1,18 @@
+program talkrepeater;
+
+uses
+  Vcl.Forms,
+  uMain in 'uMain.pas' {Form1},
+  uDM in 'uDM.pas' {dm: TDataModule},
+  uConfig in 'uConfig.pas',
+  uLog in 'uLog.pas';
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(Tdm, dm);
+  Application.Run;
+end.

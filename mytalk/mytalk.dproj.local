@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2020/02/01 09:59:44.000.030,=D:\works\delphi\Unit1.pas</Transaction>
+    <Transaction>2020/02/01 10:00:32.000.660,D:\works\delphi\Unit1.pas=D:\works\delphi\talk\mytalk\uMain.pas</Transaction>
+    <Transaction>2020/02/01 10:00:32.000.660,D:\works\delphi\Unit1.dfm=D:\works\delphi\talk\mytalk\uMain.dfm</Transaction>
+    <Transaction>2020/02/01 10:00:45.000.348,D:\works\delphi\Project1.dproj=D:\works\delphi\talk\mytalk\mytalk.dproj</Transaction>
+    <Transaction>2020/02/02 12:43:26.790,=D:\works\delphi\talk\mytalk\Unit1.pas</Transaction>
+    <Transaction>2020/02/02 12:43:50.806,D:\works\delphi\talk\mytalk\uConfig.pas=D:\works\delphi\talk\mytalk\Unit1.pas</Transaction>
+    <Transaction>2020/02/02 12:44:08.784,=D:\works\delphi\talk\mytalk\Unit1.pas</Transaction>
+    <Transaction>2020/02/02 12:44:22.000,D:\works\delphi\talk\mytalk\uDM.dfm=D:\works\delphi\talk\mytalk\Unit1.dfm</Transaction>
+    <Transaction>2020/02/02 12:44:22.000,D:\works\delphi\talk\mytalk\uDM.pas=D:\works\delphi\talk\mytalk\Unit1.pas</Transaction>
+    <Transaction>2020/02/02 12:46:12.202,=D:\works\delphi\talk\mytalk\Unit1.pas</Transaction>
+    <Transaction>2020/02/02 12:46:30.937,D:\works\delphi\talk\mytalk\uLog.pas=D:\works\delphi\talk\mytalk\Unit1.pas</Transaction>
+    <Transaction>2020/02/02 12:49:52.566,=D:\works\delphi\talk\mytalk\Unit1.pas</Transaction>
+    <Transaction>2020/02/02 12:51:24.025,D:\works\delphi\talk\mytalk\uRichEx.pas=D:\works\delphi\talk\mytalk\Unit1.pas</Transaction>
+    <Transaction>2020/02/02 13:13:24.528,=D:\works\delphi\talk\mytalk\uOrder.pas</Transaction>
+  </Transactions>
+</BorlandProject>

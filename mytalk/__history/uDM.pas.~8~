@@ -1,0 +1,112 @@
+unit uDM;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, System.Win.ScktComp,
+  uConfig,uOrder;
+
+type
+  TDM = class(TDataModule)
+    cs1: TClientSocket;
+    procedure DataModuleCreate(Sender: TObject);
+    procedure cs1Connect(Sender: TObject; Socket: TCustomWinSocket);
+    procedure cs1Disconnect(Sender: TObject; Socket: TCustomWinSocket);
+    procedure cs1Error(Sender: TObject; Socket: TCustomWinSocket;
+      ErrorEvent: TErrorEvent; var ErrorCode: Integer);
+  private
+    { Private declarations }
+    mUserID:integer;
+     function getSocketErr(ErrorEvent: TErrorEvent;ErrorCode:integer):string;
+     procedure RequestUserID();
+  public
+    { Public declarations }
+  end;
+
+var
+  DM: TDM;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+{$R *.dfm}
+uses
+  uMain;
+
+procedure TDM.RequestUserID();
+var
+  oh:stOrderHeader;
+begin
+  uOrder.formatOH(oh);
+  oh.cmd:=uOrder.CMD_REQUEST_USER_ID;
+  if cs1.Active then
+    cs1.Socket.SendBuf(oh,sizeof(oh));
+end;
+
+procedure TDM.cs1Connect(Sender: TObject; Socket: TCustomWinSocket);
+begin
+  fmain.LogMain('连接服务器成功！');
+end;
+
+procedure TDM.cs1Disconnect(Sender: TObject; Socket: TCustomWinSocket);
+begin
+  fmain.LogMain('断开与服务器连接！');
+end;
+
+procedure TDM.cs1Error(Sender: TObject; Socket: TCustomWinSocket;
+  ErrorEvent: TErrorEvent; var ErrorCode: Integer);
+begin
+  fMain.LogMain('ClientError:'+getSocketErr(ErrorEvent,ErrorCode));
+  //socket.Close;
+  ErrorCode:=0;
+end;
+
+procedure TDM.DataModuleCreate(Sender: TObject);
+begin
+  cs1.Close;
+  cs1.Port:=uConfig.port_order;
+  cs1.Address:=uConfig.host_addr;
+  cs1.Open;
+end;
+
+
+
+
+//----------------------------------------------------------------------------------------
+function tdm.getSocketErr(ErrorEvent: TErrorEvent;ErrorCode:integer):string;
+var
+  sErrorCode,inf,sErrorEvent:string;
+begin
+  sErrorCode:='错误代码：'+inttostr(ErrorCode);
+  if ErrorEvent=eeConnect then
+  begin
+    sErrorEvent:='连接失败！';
+  end;
+  if ErrorEvent=eeGeneral then
+  begin
+    sErrorEvent:='无法识别的错误！';
+  end;
+  if ErrorEvent=eeSend then
+  begin
+    sErrorEvent:='发送数据失败！';
+  end;
+    if ErrorEvent=eeReceive then
+  begin
+    sErrorEvent:='接受数据失败！';
+  end;
+    if ErrorEvent=eeDisconnect then
+  begin
+    //DisCon(socket);
+
+    sErrorEvent:='关闭连接失败！';
+  end;
+    if ErrorEvent=eeAccept then
+  begin
+    sErrorEvent:='接受连接失败！';
+  end;
+  inf:=sErrorEvent+sErrorCode;
+  result:=inf;
+end;
+
+end.

@@ -1,0 +1,53 @@
+unit uMain;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls,
+  uDM;
+
+type
+  TfMain = class(TForm)
+    Bar1: TStatusBar;
+    MemoInfo: TMemo;
+    Panel1: TPanel;
+    btnClose: TButton;
+    procedure FormShow(Sender: TObject);
+    procedure btnCloseClick(Sender: TObject);
+  private
+    { Private declarations }
+     procedure TryExcepts(Sender: TObject; E: Exception);
+  public
+    { Public declarations }
+    procedure LogMain(const str: string);
+  end;
+
+var
+  fMain: TfMain;
+
+implementation
+
+{$R *.dfm}
+uses
+  uLog;
+procedure TfMain.TryExcepts(Sender: TObject; E: Exception);
+begin
+  LogMain(E.Message);
+end;
+procedure TfMain.btnCloseClick(Sender: TObject);
+begin
+  close;
+end;
+
+procedure TfMain.FormShow(Sender: TObject);
+begin
+  uMain.fMain.LogMain('ÕìÌýÃüÁî¶Ë¿Ú£º'+inttostr(dm.ssorder.Port));
+  uMain.fMain.LogMain('ÕìÌýÊý¾Ý¶Ë¿Ú£º'+inttostr(dm.ssdata1.Port));
+end;
+
+procedure tfmain.LogMain(const str: string);
+begin
+  memoInfo.Lines.Add(Log(str));
+end;
+end.

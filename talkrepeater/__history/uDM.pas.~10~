@@ -1,0 +1,461 @@
+unit uDM;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, System.Win.ScktComp,uConfig,uOrder,windows;
+const
+  //wm_user=$0400;
+  //wm_data=wm_user+100+1;
+  MAX_BUF_SIZE=8192; //8192
+  USER_ID_BASE=1001;//起始基本编号
+type
+  //TEventFlag=(Fconnect,Fdisconnect,FgetUserId,FListPhone,FAddUser,FAddPhone);
+  //数据接收标志:未接收,不可用,接收中,接收完成
+  TFrecvFlag=(Fnone,Funavailable,Frecving,FrecvEnd);//数据接收标志
+
+  PRecvDataBuffer=^stRecvDataBuffer;
+  stRecvDataBuffer=record   //接收数据缓冲区
+    oh:stOrderHeader;
+    recvFlag:TFrecvFlag;     //接收标志
+    Recved:integer;         //已接收的数据大小
+    idle:integer;            //空闲时间
+    targetSocket:TCustomWinSocket;
+    buf:array[0..MAX_BUF_SIZE-1] of byte;
+  end;
+  PRepeatDataBuffer=^stRepeatDataBuffer;
+  stRepeatDataBuffer=record   //转发数据缓冲区
+    oh:stOrderHeader;
+    targetSocket:TCustomWinSocket;
+    buf:array[0..MAX_BUF_SIZE-1] of byte;
+  end;
+
+type
+  Tdm = class(TDataModule)
+    ssOrder: TServerSocket;
+    ssData1: TServerSocket;
+    procedure DataModuleCreate(Sender: TObject);
+    procedure ssOrderClientConnect(Sender: TObject; Socket: TCustomWinSocket);
+    procedure ssOrderClientError(Sender: TObject; Socket: TCustomWinSocket;
+      ErrorEvent: TErrorEvent; var ErrorCode: Integer);
+    procedure ssOrderClientRead(Sender: TObject; Socket: TCustomWinSocket);
+    procedure ssOrderClientDisconnect(Sender: TObject;
+      Socket: TCustomWinSocket);
+  private
+    { Private declarations }
+    mNewUserID:integer;//新的编号
+    function getSocketErr(ErrorEvent: TErrorEvent;ErrorCode:integer):string;
+    function RecvData(var Socket: TCustomWinSocket):TFrecvFlag;
+    procedure processCmd(oh:stOrderHeader; Socket: TCustomWinSocket);
+    function getSocket(id:DWORD;ServerSocket:TServerSocket):TCustomWinSocket;
+    function getNewUserID():integer;
+    function PairSocket(Sender: TObject; Socket: TCustomWinSocket):boolean; //匹配socket
+    procedure SendResult(Socket: TCustomWinSocket;bSuccess:boolean);   //发送 转发数据是否成功
+    function repeatData(inSocket,outSocket: TCustomWinSocket):boolean;
+  public
+    { Public declarations }
+  end;
+
+var
+  dm: Tdm;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+{$R *.dfm}
+uses
+  uMain;
+function Tdm.getNewUserID():integer;
+begin
+  result:=mNewUserID;
+  mNewUserID:=mNewUserID+1;
+end;
+
+procedure Tdm.DataModuleCreate(Sender: TObject);
+begin
+  ssorder.Port:=uConfig.port_order;
+  ssorder.Open;
+  ssdata1.Port:=uConfig.port_data;
+  ssdata1.Open;
+  mNewUserID:=USER_ID_BASE;
+  //uMain.fMain.LogMain('侦听命令端口：'+inttostr(ssorder.Port));
+  //uMain.fMain.LogMain('侦听数据端口：'+inttostr(ssorder.Port));
+end;
+
+procedure Tdm.ssOrderClientConnect(Sender: TObject; Socket: TCustomWinSocket);
+begin
+ fmain.LogMain('ssOrderClientConnect:'+socket.RemoteAddress);
+end;
+
+procedure Tdm.ssOrderClientDisconnect(Sender: TObject;
+  Socket: TCustomWinSocket);
+begin
+  if socket.Data<>nil then
+  begin
+   freemem(socket.Data);
+   socket.Data:=nil;
+  end;
+end;
+
+procedure Tdm.ssOrderClientError(Sender: TObject; Socket: TCustomWinSocket;
+  ErrorEvent: TErrorEvent; var ErrorCode: Integer);
+begin
+  fMain.LogMain('ssOrderClientError:'+getSocketErr(ErrorEvent,ErrorCode)+';addr:'+socket.RemoteAddress);
+  socket.Close;
+  ErrorCode:=0;
+end;
+
+
+
+
+
+
+
+
+
+procedure Tdm.ssOrderClientRead(Sender: TObject; Socket: TCustomWinSocket);
+var
+  recvFlag:TFrecvFlag;
+  pBuf:PRecvdataBuffer;
+  oh:stOrderHeader;
+  sbuf:string;
+begin
+  fMain.LogMain('----------------------------------------------ssOrderClientRead:datasize:'+inttostr(socket.ReceiveLength)+'-----------------------------------------------------------------------------------');
+  pBuf:=nil;
+try
+  if(socket.ReceiveLength=0)then exit;
+  //if(ReceiveLength=1)then begin fmain.LogMain('ReceiveLength:1');exit;end;
+  if(socket.Data=nil)then     //1.连接时申请用户id
+  begin
+    socket.ReceiveBuf(oh,sizeof(oh));
+    if(not uOrder.VerifyOH(oh))then exit;
+    fmain.LogMain('新增连接：'+socket.RemoteAddress+';ID='+inttostr(oh.id)+';PID='+inttostr(oh.pid));
+    getmem(pBuf,sizeof(stRecvDataBuffer));
+    zeromemory(pBuf,sizeof(stRecvDataBuffer));
+    pBuf^.oh:=oh;
+    socket.Data:=pBuf;
+
+    if (oh.len=0)and(oh.cmd=uOrder.CMD_REQUEST_USER_ID) then
+    begin
+      pBuf^.recvFlag:=FrecvEnd;
+      oh.id:=getNewUserId();
+      socket.SendBuf(oh,sizeof(oh));
+      exit;
+    end;
+
+  end else begin
+    pBuf:=socket.Data;
+  end;
+  if(pBuf^.recvFlag<>Frecving)then
+  begin
+    socket.ReceiveBuf(oh,sizeof(oh));
+    if(not uOrder.VerifyOH(oh))then
+    begin
+      pBuf^.recvFlag:=Funavailable;
+      exit;
+    end;
+    pBuf^.oh:=oh;              //2.接收命令头
+    if not PairSocket(Sender,Socket) then //3.对方是否在线
+    begin
+      if(oh.len>0)then   //接收剩余数据
+      begin
+        setlength(sbuf,oh.len);
+        socket.ReceiveBuf(sbuf[1],oh.len);
+      end;
+      SendResult(socket,false);  //对方未在线；
+      exit;
+    end;
+    SendResult(socket,true);  //对方在线；
+    pBuf^.targetSocket.SendBuf(oh,sizeof(stOrderHeader));
+    if(oh.len=0)then exit;
+    //recvLen:=recvLen-sizeof(stOrderHeader);
+    //if(recvLen=0)then exit;
+  end;
+  if(pBuf^.targetSocket<>nil)and(pBuf^.targetSocket.Connected)then
+  begin
+    repeatData(socket,pBuf^.targetSocket);
+    exit;
+  end;
+
+  if(oh.len>0)then   //接收剩余数据
+  begin
+    setlength(sbuf,oh.len);
+    socket.ReceiveBuf(sbuf[1],oh.len);
+  end;
+
+finally
+
+end;
+end;
+
+
+function TDM.repeatData(inSocket,outSocket: TCustomWinSocket):boolean;
+var
+  buf:array of byte;
+  dataLen,recvLen,recved,sended,sendLen,errCount:integer;
+begin
+  result:=false;
+  dataLen:=inSocket.ReceiveLength;
+  if(dataLen<=0)then exit;
+  recvLen:=0;
+  setlength(buf,dataLen);
+  while dataLen>0 do
+  begin
+    recved:=inSocket.ReceiveBuf(buf[recvLen],dataLen);
+    if(recved<=0)then
+    begin
+      fmain.LogMain('repeatData recv error:'+inttostr(recved));
+      exit;
+    end;
+    recvLen:=recvLen+recved;
+    dataLen:=dataLen-recved;
+  end;
+  if(outSocket=nil)or(outSocket.Connected=false)then exit;
+  errCount:=0;
+  sendLen:=0;
+  dataLen:=length(buf);
+  while dataLen>0 do
+  begin
+    sended:=outSocket.SendBuf(Buf[SendLen],dataLen);
+    if(sended<=0)then
+    begin
+      fmain.LogMain('repeatData send error:'+inttostr(recved));
+      sleep(1000);
+      errCount:=errCount+1;
+      if(errCount>3)then exit;
+      continue;
+    end;
+    sendLen:=sended+sendLen;
+    dataLen:=dataLen-sended;
+  end;
+  result:=true;
+end;
+
+procedure TDM.SendResult(Socket: TCustomWinSocket;bSuccess:boolean);   //发送 转发数据是否成功
+var
+  oh:stOrderHeader;
+begin
+  uOrder.formatOH(oh);
+  oh.cmd:=uOrder.CMD_SEND_RESULT;
+  if(bSuccess) then DWORD(oh.dat):=1;
+  socket.SendBuf(oh,sizeof(oh));
+end;
+
+//根据id查找socket
+function TDM.PairSocket(Sender: TObject; Socket: TCustomWinSocket):boolean;
+var
+  i:integer;
+  ServerSocket:TServerWinSocket;
+  pBuf1,pBuf2:pRepeatDatabuffer;
+begin
+  result:=false;
+  pBuf1:=Socket.Data;
+  ServerSocket:=Sender as TServerWinSocket;
+  fmain.LogMain('Pair：port='+inttostr(socket.LocalPort)+';connectcount='+inttostr(ServerSocket.ActiveConnections));
+  for I := 0 to ServerSocket.ActiveConnections-1 do
+  begin
+    pBuf2:=ServerSocket.Connections[i].Data;
+    if(pBuf2=nil)then continue;
+
+    if(pBuf2^.oh.id=pBuf1^.oh.pid)then
+    begin
+      pBuf1^.targetSocket:=ServerSocket.Connections[i];
+      pBuf2^.targetSocket:=Socket;
+      result:=true;
+      exit;
+    end;
+  end;
+end;
+
+
+
+//根据id查找socket
+function TDM.getSocket(id:DWORD;ServerSocket:TServerSocket):TCustomWinSocket;
+var
+  i:integer;
+  poh:POrderHeader;
+begin
+  result:=nil;
+  fmain.LogMain('Pair：port='+inttostr(ServerSocket.socket.LocalPort)+';connectcount='+inttostr(ServerSocket.Socket.ActiveConnections));
+  for I := 0 to ServerSocket.Socket.ActiveConnections-1 do
+  begin
+    poh:=ServerSocket.Socket.Connections[i].Data;
+    if(poh=nil)then continue;
+
+    if(poh^.id=Id)then
+    begin
+      result:=ServerSocket.Socket.Connections[i];
+      exit;
+    end;
+  end;
+end;
+
+procedure TDM.processCmd(oh:stOrderHeader; Socket: TCustomWinSocket);
+var
+  s:string;
+  txt:ansiString;
+  userId,targetId:integer;
+  targetSocket:TCustomWinSocket;
+begin
+  case oh.cmd of
+
+ uOrder.CMD_REQUEST_USER_ID:
+    begin
+      oh.id:=mNewUserId;
+      oh.len:=0;
+      socket.SendBuf(oh,sizeof(oh));
+      mNewUserId:=mNewUserId+1;
+    end;
+  else
+    begin
+      targetId:=oh.pid;
+      fmain.LogMain('转发:'+inttostr(oh.cmd)+'pId:'+inttostr(targetId)+';Id:'+inttostr(oh.id));
+      targetSocket:=getSocket(targetId,dm.ssOrder);
+      if targetSocket<>nil then
+      begin
+        fmain.LogMain('转发:'+inttostr(oh.cmd)+'size:'+inttostr(oh.len));
+        targetSocket.SendBuf(oh,sizeof(stOrderHeader));
+        if(oh.len>0)then targetSocket.SendBuf(oh.dat^,oh.len);
+
+      end;
+    end;
+  end;
+end;
+//接收异步数据
+function TDM.RecvData(var Socket: TCustomWinSocket):TFrecvFlag;
+var
+  pBuf:PRecvDataBuffer;
+  oh:stOrderHeader;
+  ReceiveLength,requestLen,RecvedLen,DataLen:integer; //
+  pdata:pointer;
+begin
+  ReceiveLength:=socket.ReceiveLength;
+  pBuf:=nil;
+try
+  if(ReceiveLength=0)then exit;
+  //if(ReceiveLength=1)then begin fmain.LogMain('ReceiveLength:1');exit;end;
+  if(socket.Data=nil)then
+  begin
+    socket.ReceiveBuf(oh,sizeof(oh));
+    if(not uOrder.VerifyOH(oh))then exit;
+    fmain.LogMain('新增连接：'+socket.RemoteAddress+';ID='+inttostr(oh.id)+';PID='+inttostr(oh.pid));
+    getmem(pBuf,sizeof(stRecvDataBuffer));
+    zeromemory(pBuf,sizeof(stRecvDataBuffer));
+    pBuf^.oh:=oh;
+    //pBuf^.oh.dat:=@pBuf^.buf[0];
+    socket.Data:=pBuf;
+    if (oh.len=0) then
+    begin
+      pBuf^.recvFlag:=FrecvEnd;
+      exit;
+    end
+    else begin
+      pBuf^.recvFlag:=Frecving;
+      ReceiveLength:=ReceiveLength-sizeof(oh);
+      //getmem(pBuf^.oh.dat,oh.len);
+      //pBuf^.oh.dat:=@pBuf^.buf[0];
+      if(ReceiveLength=0)then exit;
+    end;
+  end else begin
+    pBuf:=socket.Data;
+  end;
+
+
+  if(pBuf^.recvFlag<>Frecving)then
+  begin
+    socket.ReceiveBuf(oh,sizeof(oh));
+    if(not uOrder.VerifyOH(oh))then
+    begin
+      pBuf^.recvFlag:=Funavailable;
+      exit;
+    end;
+    pBuf^.oh:=oh;
+
+    if(oh.len=0)then
+    begin
+      pBuf^.recvFlag:=FrecvEnd;
+      exit;
+    end else begin
+      DataLen:=oh.len;
+      if DataLen<=ReceiveLength-sizeof(oh) then requestLen:=DataLen else requestLen:=ReceiveLength-sizeof(oh); //要接收的数据；
+      //getmem(pBuf^.oh.dat,oh.len);
+      //pBuf^.oh.dat:=@pBuf^.buf[0];
+      pBuf^.Recved:=socket.ReceiveBuf(pBuf^.buf[0],requestLen);
+      if(pBuf^.Recved>=oh.len)then
+        pBuf^.recvFlag:=FrecvEnd
+      else
+        pBuf^.recvFlag:=Frecving;
+      exit;
+    end;
+  end else begin
+    RecvedLen:=pBuf^.Recved;
+    DataLen:=pBuf^.oh.len;
+    if(RecvedLen<DataLen)then
+    begin
+      if DataLen-RecvedLen<=ReceiveLength then requestLen:=DataLen-RecvedLen else requestLen:=ReceiveLength; //要接收的数据；
+      //pdata:=pointer(DWORD(pBuf^.oh.dat)+RecvedLen);
+      //pdata:=@pBuf^.buf[RecvedLen];
+      //RecvedLen:=socket.ReceiveBuf(pdata^,requestLen);
+      RecvedLen:=socket.ReceiveBuf(pBuf^.buf[RecvedLen],requestLen);
+      if(RecvedLen=-1)then exit;
+      pBuf^.Recved:=pBuf^.Recved+RecvedLen;
+
+      if(pBuf^.Recved>=pBuf^.oh.len)then
+      begin
+        pBuf^.recvFlag:=FrecvEnd;
+      end;
+    end else begin
+        pBuf^.recvFlag:=FrecvEnd;
+    end;
+  end;
+finally
+  if pBuf<>nil then
+  begin
+    pBuf^.idle:=0;
+    if(pBuf^.oh.len>0)then
+      pBuf^.oh.dat:=@pBuf^.buf[0];
+    result:=pBuf^.recvFlag;
+  end
+  else
+    result:=Funavailable;
+end;
+end;
+
+//----------------------------------------------------------------------------------------
+function tdm.getSocketErr(ErrorEvent: TErrorEvent;ErrorCode:integer):string;
+var
+  sErrorCode,inf,sErrorEvent:string;
+begin
+  sErrorCode:='错误代码：'+inttostr(ErrorCode);
+  if ErrorEvent=eeConnect then
+  begin
+    sErrorEvent:='连接失败！';
+  end;
+  if ErrorEvent=eeGeneral then
+  begin
+    sErrorEvent:='无法识别的错误！';
+  end;
+  if ErrorEvent=eeSend then
+  begin
+    sErrorEvent:='发送数据失败！';
+  end;
+    if ErrorEvent=eeReceive then
+  begin
+    sErrorEvent:='接受数据失败！';
+  end;
+    if ErrorEvent=eeDisconnect then
+  begin
+    //DisCon(socket);
+
+    sErrorEvent:='关闭连接失败！';
+  end;
+    if ErrorEvent=eeAccept then
+  begin
+    sErrorEvent:='接受连接失败！';
+  end;
+  inf:=sErrorEvent+sErrorCode;
+  result:=inf;
+end;
+
+end.

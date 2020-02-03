@@ -1,0 +1,18 @@
+program mytalk;
+
+uses
+  Vcl.Forms,
+  uMain in 'uMain.pas' {fMain},
+  uConfig in 'uConfig.pas',
+  uDM in 'uDM.pas' {DataModule1: TDataModule},
+  uLog in 'uLog.pas';
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TfMain, fMain);
+  Application.CreateForm(TDataModule1, DataModule1);
+  Application.Run;
+end.

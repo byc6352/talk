@@ -1,0 +1,106 @@
+unit uMain;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ComCtrls, Vcl.ExtCtrls,
+  uLog,uConfig,uDM,uOrder;
+
+type
+  TfMain = class(TForm)
+    Bar1: TStatusBar;
+    GroupBox1: TGroupBox;
+    Panel1: TPanel;
+    btnSendMSG: TButton;
+    btnClose: TButton;
+    Splitter1: TSplitter;
+    edtInput: TRichEdit;
+    btnSendFile: TButton;
+    edtInfo: TRichEdit;
+    GroupBox2: TGroupBox;
+    edtFriendID: TEdit;
+    procedure btnCloseClick(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure btnSendMSGClick(Sender: TObject);
+  private
+    { Private declarations }
+    procedure TryExcepts(Sender: TObject; E: Exception);
+  public
+    { Public declarations }
+    procedure LogMain(const str: string);
+  end;
+
+var
+  fMain: TfMain;
+
+implementation
+
+{$R *.dfm}
+procedure TfMain.TryExcepts(Sender: TObject; E: Exception);
+begin
+  LogMain(E.Message);
+end;
+procedure TfMain.btnSendMSGClick(Sender: TObject);
+var
+  userID:integer;
+  msg:string;
+  ansimsg:ansiString;
+  len:integer;
+begin
+  if dm.cs1.Active=false then
+  begin
+    showmessage('未连接服务器！');
+    exit;
+  end;
+  if trim(edtFriendID.text)='' then
+  begin
+    showmessage('请输入对方编号！');
+    exit;
+  end;
+  if trim(edtInput.text)='' then
+  begin
+    showmessage('消息内容为空！');
+    exit;
+  end;
+  msg:=trim(edtInput.text);
+  ansimsg:=ansiString(msg);
+  len:=length(ansimsg);
+  if len>=uDM.MAX_BUF_SIZE-sizeof(stOrderHeader) then
+  begin
+    showmessage('消息内容不能大于'+inttostr(uDM.MAX_BUF_SIZE-sizeof(stOrderHeader)));
+    exit;
+  end;
+try
+  userID:=strtoint(trim(edtFriendID.Text));
+
+  dm.SendMSG(userID,ansimsg);
+  edtInfo.Lines.Add(msg);
+finally
+
+end;
+end;
+
+procedure TfMain.FormCreate(Sender: TObject);
+begin
+Application.OnException := TryExcepts;
+end;
+
+procedure TfMain.FormShow(Sender: TObject);
+begin
+  fmain.Caption:=uConfig.APP_NAME+uConfig.APP_VERSION;
+  if(dm.cs1.Active)then bar1.Panels[0].Text:='连接服务器成功！';
+end;
+
+procedure tfmain.LogMain(const str: string);
+begin
+  edtInfo.Lines.Add(Log(str));
+end;
+
+procedure TfMain.btnCloseClick(Sender: TObject);
+begin
+  close;
+end;
+
+end.

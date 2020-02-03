@@ -1,0 +1,409 @@
+unit uRichEx;
+
+interface
+
+uses
+  Windows, Messages, Graphics, ActiveX, ComObj;
+
+const
+
+  // Flags to specify which interfaces should be returned in the structure above
+  REO_GETOBJ_NO_INTERFACES = $00000000;
+  REO_GETOBJ_POLEOBJ = $00000001;
+  REO_GETOBJ_PSTG = $00000002;
+  REO_GETOBJ_POLESITE = $00000004;
+  REO_GETOBJ_ALL_INTERFACES = $00000007;
+
+  // Place object at selection
+  REO_CP_SELECTION = $FFFFFFFF;
+
+  // Use character position to specify object instead of index
+  REO_IOB_SELECTION = $FFFFFFFF;
+  REO_IOB_USE_CP = $FFFFFFFF;
+
+  // object flags
+  REO_NULL = $00000000;                      // No flags
+  REO_READWRITEMASK = $0000003F;             // Mask out RO bits
+  REO_DONTNEEDPALETTE = $00000020;           // object doesn't need palette
+  REO_BLANK = $00000010;                     // object is blank
+  REO_DYNAMICSIZE = $00000008;               // object defines size always
+  REO_INVERTEDSELECT = $00000004;            // object drawn all inverted if sel
+  REO_BELOWBASELINE = $00000002;             // object sits below the baseline
+  REO_RESIZABLE = $00000001;                 // object may be resized
+  REO_LINK = $80000000;                      // object is a link (RO)
+  REO_STATIC = $40000000;                    // object is static (RO)
+  REO_SELECTED = $08000000;                  // object selected (RO)
+  REO_OPEN = $04000000;                      // object open in its server (RO)
+  REO_INPLACEACTIVE = $02000000;             // object in place active (RO)
+  REO_HILITED = $01000000;                   // object is to be hilited (RO)
+  REO_LINKAVAILABLE = $00800000;             // Link believed available (RO)
+  REO_GETMETAFILE = $00400000;               // object requires metafile (RO)
+
+  // flags for IRichEditOle::GetClipboardData(),
+  // IRichEditOleCallback::GetClipboardData() and
+  // IRichEditOleCallback::QueryAcceptData()
+  RECO_PASTE = $00000000;                    // paste from clipboard
+  RECO_DROP = $00000001;                     // drop
+  RECO_COPY = $00000002;                     // copy to the clipboard
+  RECO_CUT = $00000003;                      // cut to the clipboard
+  RECO_DRAG = $00000004;                     // drag
+
+  EM_GETOLEINTERFACE = WM_USER + 60;
+  IID_IUnknown: TGUID = (
+    D1: $00000000;
+    D2: $0000;
+    D3: $0000;
+    D4: ($C0, $00, $00, $00, $00, $00, $00, $46)
+  );
+  IID_IOleObject: TGUID = (
+    D1: $00000112;
+    D2: $0000;
+    D3: $0000;
+    D4: ($C0, $00, $00, $00, $00, $00, $00, $46)
+  );
+  IID_IGifAnimator: TGUID = '{0C1CF2DF-05A3-4FEF-8CD4-F5CFC4355A16}';
+  CLASS_GifAnimator: TGUID = '{06ADA938-0FB0-4BC0-B19B-0A38AB17F182}';
+
+type
+  _ReObject = record
+    cbStruct: DWORD;                         { Size of structure           }
+    cp: ULONG;                               { Character position of object   }
+    clsid: TCLSID;                           { class ID of object           }
+    poleobj: IOleObject;                     { OLE object interface         }
+    pstg: IStorage;                          { Associated storage interface   }
+    polesite: IOleClientSite;                { Associated client site interface }
+    sizel: TSize;                            { Size of object (may be 0,0)     }
+    dvAspect: Longint;                       { Display aspect to use         }
+    dwFlags: DWORD;                          { object status flags         }
+    dwUser: DWORD;                           { Dword for user's use         }
+  end;
+
+  TReObject = _ReObject;
+
+  TCharRange = record
+    cpMin: Integer;
+    cpMax: Integer;
+  end;
+
+  TFormatRange = record
+    hdc: Integer;
+    hdcTarget: Integer;
+    rectRegion: TRect;
+    rectPage: TRect;
+    chrg: TCharRange;
+  end;
+
+  IRichEditOle = interface(IUnknown)
+    ['{00020d00-0000-0000-c000-000000000046}']
+    function GetClientSite(out clientSite: IOleClientSite): HResult; stdcall;
+    function GetObjectCount: HResult; stdcall;
+    function GetLinkCount: HResult; stdcall;
+    function GetObject(iob: Longint; out reobject: TReObject; dwFlags: DWORD): HResult; stdcall;
+    function InsertObject(var reobject: TReObject): HResult; stdcall;
+    function ConvertObject(iob: Longint; rclsidNew: TIID; lpstrUserTypeNew: LPCSTR): HResult; stdcall;
+    function ActivateAs(rclsid: TIID; rclsidAs: TIID): HResult; stdcall;
+    function SetHostNames(lpstrContainerApp: LPCSTR; lpstrContainerObj: LPCSTR): HResult; stdcall;
+    function SetLinkAvailable(iob: Longint; fAvailable: BOOL): HResult; stdcall;
+    function SetDvaspect(iob: Longint; dvaspect: DWORD): HResult; stdcall;
+    function HandsOffStorage(iob: Longint): HResult; stdcall;
+    function SaveCompleted(iob: Longint; const stg: IStorage): HResult; stdcall;
+    function InPlaceDeactivate: HResult; stdcall;
+    function ContextSensitiveHelp(fEnterMode: BOOL): HResult; stdcall;
+    function GetClipboardData(var chrg: TCharRange; reco: DWORD; out dataobj: IDataObject): HResult; stdcall;
+    function ImportDataObject(dataobj: IDataObject; cf: TClipFormat; hMetaPict: HGLOBAL): HResult; stdcall;
+  end;
+
+  // *********************************************************************//
+  // interface: IGifAnimator
+  // Flags:   (4544) Dual NonExtensible OleAutomation Dispatchable
+  // GUID:     {0C1CF2DF-05A3-4FEF-8CD4-F5CFC4355A16}
+  // *********************************************************************//
+  IGifAnimator = interface(IDispatch)
+    ['{0C1CF2DF-05A3-4FEF-8CD4-F5CFC4355A16}']
+    procedure LoadFromFile(const FileName: WideString); safecall;
+    function TriggerFrameChange: WordBool; safecall;
+    function GetFilePath: WideString; safecall;
+    procedure ShowText(const Text: WideString); safecall;
+  end;
+
+  // *********************************************************************//
+  // DispIntf: IGifAnimatorDisp
+  // Flags:   (4544) Dual NonExtensible OleAutomation Dispatchable
+  // GUID:     {0C1CF2DF-05A3-4FEF-8CD4-F5CFC4355A16}
+  // *********************************************************************//
+  IGifAnimatorDisp = dispinterface
+    ['{0C1CF2DF-05A3-4FEF-8CD4-F5CFC4355A16}']
+    procedure LoadFromFile(const FileName: WideString); dispid 1;
+    function TriggerFrameChange: WordBool; dispid 2;
+    function GetFilePath: WideString; dispid 3;
+    procedure ShowText(const Text: WideString); dispid 4;
+  end;
+
+  TBitmapOle = class(TInterfacedObject, IDataObject)
+  private
+    FStgm: TStgMedium;
+    FFmEtc: TFormatEtc;
+    procedure SetBitmap(hBitmap: HBITMAP);
+    procedure GetOleObject(OleSite: IOleClientSite; Storage: IStorage; var OleObject: IOleObject);
+  public
+    { ======================================================================= }
+    { implementation of IDataObject interface }
+    function GetData(const formatetcIn: TFormatEtc; out medium: TStgMedium): HResult; stdcall;
+    function GetDataHere(const formatetc: TFormatEtc; out medium: TStgMedium): HResult; stdcall;
+    function QueryGetData(const formatetc: TFormatEtc): HResult; stdcall;
+    function GetCanonicalFormatEtc(const formatetc: TFormatEtc; out formatetcOut: TFormatEtc): HResult; stdcall;
+    function SetData(const formatetc: TFormatEtc; var medium: TStgMedium; fRelease: BOOL): HResult; stdcall;
+    function EnumFormatEtc(dwDirection: Longint; out enumFormatEtc: IEnumFormatEtc): HResult; stdcall;
+    function DAdvise(const formatetc: TFormatEtc; advf: Longint; const advSink: IAdviseSink; out dwConnection: Longint): HResult; stdcall;
+    function DUnadvise(dwConnection: Longint): HResult; stdcall;
+    function EnumDAdvise(out enumAdvise: IEnumStatData): HResult; stdcall;
+    { ======================================================================= }
+  end;
+
+function InsertBitmap(hRichEdit: THandle; const FileName: string): Boolean; overload;
+
+function InsertBitmap(hRichEdit: THandle; Bitmap: TBitmap): Boolean; overload;
+
+function InsertGif(hRichEdit: THandle; const FileName: string): Boolean;
+
+implementation
+
+function GetRichEditOle(hRichEdit: THandle): IRichEditOle;
+begin
+  SendMessage(hRichEdit, EM_GETOLEINTERFACE, 0, Longint(@Result));
+end;
+
+function GetImage(Bitmap: TBitmap): HBITMAP;
+var
+  Dest: HBitmap;
+  DC, MemDC: HDC;
+  OldBitmap: HBITMAP;
+begin
+  DC := GetDC(0);
+  MemDC := CreateCompatibleDC(DC);
+  try
+    Dest := CreateCompatibleBitmap(DC, Bitmap.Width, Bitmap.Height);
+    OldBitmap := SelectObject(MemDC, Dest);
+    BitBlt(MemDC, 0, 0, Bitmap.Width, Bitmap.Height, Bitmap.Canvas.Handle, 0, 0, SRCCOPY);
+    SelectObject(MemDC, OldBitmap);
+  finally
+    DeleteDC(MemDC);
+    ReleaseDC(0, DC);
+  end;
+  Result := Dest;
+end;
+
+function TBitmapOle.GetData(const formatetcIn: TFormatEtc; out medium: TStgMedium): HResult; stdcall;
+begin
+  medium.tymed := TYMED_GDI;
+  medium.hBitmap := OleDuplicateData(FStgm.hBitmap, CF_BITMAP, 0);
+  medium.unkForRelease := nil;
+  if medium.hBitmap = 0 then
+    Result := E_HANDLE
+  else
+    Result := S_OK;
+end;
+
+function TBitmapOle.GetDataHere(const formatetc: TFormatEtc; out medium: TStgMedium): HResult; stdcall;
+begin
+  Result := E_NOTIMPL;
+end;
+
+function TBitmapOle.QueryGetData(const formatetc: TFormatEtc): HResult; stdcall;
+begin
+  Result := E_NOTIMPL;
+end;
+
+function TBitmapOle.GetCanonicalFormatEtc(const formatetc: TFormatEtc; out formatetcOut: TFormatEtc): HResult; stdcall;
+begin
+  Result := E_NOTIMPL;
+end;
+
+function TBitmapOle.SetData(const formatetc: TFormatEtc; var medium: TStgMedium; fRelease: BOOL): HResult; stdcall;
+begin
+  FStgm := medium;
+  FFmEtc := formatetc;
+  Result := S_OK;
+end;
+
+function TBitmapOle.EnumFormatEtc(dwDirection: Longint; out enumFormatEtc: IEnumFormatEtc): HResult; stdcall;
+begin
+  Result := E_NOTIMPL;
+end;
+
+function TBitmapOle.DAdvise(const formatetc: TFormatEtc; advf: Longint; const advSink: IAdviseSink; out dwConnection: Longint): HResult; stdcall;
+begin
+  Result := E_NOTIMPL;
+end;
+
+function TBitmapOle.DUnadvise(dwConnection: Longint): HResult; stdcall;
+begin
+  Result := E_NOTIMPL;
+end;
+
+function TBitmapOle.EnumDAdvise(out enumAdvise: IEnumStatData): HResult; stdcall;
+begin
+  Result := E_NOTIMPL;
+end;
+
+procedure TBitmapOle.GetOleObject(OleSite: IOleClientSite; Storage: IStorage; var OleObject: IOleObject);
+begin
+  OleCheck(OleCreateStaticFromData(Self, IID_IOleObject, OLERENDER_FORMAT, @FFmEtc, OleSite, Storage, OleObject));
+end;
+
+procedure TBitmapOle.SetBitmap(hBitmap: hBitmap);
+var
+  Stgm: TStgMedium;
+  FmEtc: TFormatEtc;
+begin
+  Stgm.tymed := TYMED_GDI;                   // Storage medium = HBITMAP handle
+  Stgm.hBitmap := hBitmap;
+  Stgm.unkForRelease := nil;
+
+  FmEtc.cfFormat := CF_BITMAP;               // Clipboard format = CF_BITMAP
+  FmEtc.ptd := nil;                          // Target Device = Screen
+  FmEtc.dwAspect := DVASPECT_CONTENT;        // Level of detail = Full content
+  FmEtc.lindex := -1;                        // Index = Not applicaple
+  FmEtc.tymed := TYMED_GDI;                  // Storage medium = HBITMAP handle
+
+  SetData(FmEtc, Stgm, True);
+end;
+
+function InsertBitmap(hRichEdit: THandle; const FileName: string): Boolean;
+var
+  ReOle: IRichEditOle;
+  OleSite: IOleClientSite;
+  Storage: IStorage;
+  LockBytes: ILockBytes;
+  OleObject: IOleObject;
+  ReObj: TReObject;
+  TempOle: IUnknown;
+  FormatEtc: TFormatEtc;
+begin
+  ReOle := GetRichEditOle(hRichEdit);
+  Assert(ReOle <> nil, 'RichEditOle is null!');
+
+  ReOle.GetClientSite(OleSite);
+
+  OleCheck(CreateILockBytesOnHGlobal(0, True, LockBytes));
+  Assert(LockBytes <> nil, 'LockBytes is null!');
+
+  OleCheck(StgCreateDocfileOnILockBytes(LockBytes, STGM_SHARE_EXCLUSIVE or STGM_CREATE or STGM_READWRITE, 0, Storage));
+  Assert(Storage <> nil, 'Storage is null!');
+
+  OleCheck(OleCreateFromFile(GUID_NULL, PWideChar(WideString(FileName)), IID_IUnknown, 0, @FormatEtc, OleSite, Storage, TempOle));
+  OleCheck(TempOle.QueryInterface(IID_IOleObject, OleObject));
+  OleCheck(OleSetContainedObject(OleObject, True));
+  Assert(OleObject <> nil, 'OleObject is null!');
+
+  FillChar(ReObj, Sizeof(ReObj), 0);
+  ReObj.cbStruct := Sizeof(ReObj);
+  OleCheck(OleObject.GetUserClassID(ReObj.clsid));
+  ReObj.cp := REO_CP_SELECTION;
+  ReObj.dvaspect := DVASPECT_CONTENT;
+  ReObj.poleobj := OleObject;
+  ReObj.polesite := OleSite;
+  ReObj.pstg := Storage;
+  ReObj.dwUser := 0;
+  ReObj.sizel.cx := 0;
+  ReObj.sizel.cy := 0;
+
+  ReOle.InsertObject(ReObj);
+  Result := True;
+end;
+
+function InsertBitmap(hRichEdit: THandle; Bitmap: TBitmap): Boolean;
+var
+  ReOle: IRichEditOle;
+  BitmapOle: TBitmapOle;
+  OleSite: IOleClientSite;
+  Storage: IStorage;
+  LockBytes: ILockBytes;
+  OleObject: IOleObject;
+  ReObj: TReObject;
+begin
+  ReOle := GetRichEditOle(hRichEdit);
+  Assert(ReOle <> nil, 'RichEditOle is null!');
+  BitmapOle := TBitmapOle.Create;
+  try
+    BitmapOle.SetBitmap(GetImage(Bitmap));
+    ReOle.GetClientSite(OleSite);
+
+    OleCheck(CreateILockBytesOnHGlobal(0, True, LockBytes));
+    Assert(LockBytes <> nil, 'LockBytes is null!');
+
+    OleCheck(StgCreateDocfileOnILockBytes(LockBytes, STGM_SHARE_EXCLUSIVE or STGM_CREATE or STGM_READWRITE, 0, Storage));
+    Assert(Storage <> nil, 'Storage is null!');
+
+    BitmapOle.GetOleObject(OleSite, Storage, OleObject);
+    OleCheck(OleSetContainedObject(OleObject, True));
+
+    FillChar(ReObj, Sizeof(ReObj), 0);
+    ReObj.cbStruct := Sizeof(ReObj);
+    OleCheck(OleObject.GetUserClassID(ReObj.clsid));
+    ReObj.cp := REO_CP_SELECTION;
+    ReObj.dvaspect := DVASPECT_CONTENT;
+    ReObj.poleobj := OleObject;
+    ReObj.polesite := OleSite;
+    ReObj.pstg := Storage;
+
+    ReOle.InsertObject(ReObj);
+    Result := True;
+  finally
+    BitmapOle.Free;
+  end;
+end;
+
+function InsertGif(hRichEdit: THandle; const FileName: string): Boolean;
+var
+  ReOle: IRichEditOle;
+  OleSite: IOleClientSite;
+  Storage: IStorage;
+  LockBytes: ILockBytes;
+  OleObject: IOleObject;
+  ReObj: TReObject;
+  Animator: IGifAnimator;
+begin
+  ReOle := GetRichEditOle(hRichEdit);
+  Assert(ReOle <> nil, 'RichEditOle is null!');
+  Assert(FileName <> '', 'FileName is null!');
+
+  ReOle.GetClientSite(OleSite);
+
+  OleCheck(CreateILockBytesOnHGlobal(0, True, LockBytes));
+  Assert(LockBytes <> nil, 'LockBytes is null!');
+
+  OleCheck(StgCreateDocfileOnILockBytes(LockBytes, STGM_SHARE_EXCLUSIVE or STGM_CREATE or STGM_READWRITE, 0, Storage));
+  Assert(Storage <> nil, 'Storage is null!');
+
+  Animator := IUnknown(CreateComObject(CLASS_GifAnimator)) as IGifAnimator;
+  Animator.LoadFromFile(PWideChar(WideString(FileName)));
+  OleCheck(Animator.QueryInterface(IID_IOleObject, OleObject));
+
+  OleCheck(OleSetContainedObject(OleObject, True));
+  FillChar(ReObj, Sizeof(ReObj), 0);
+  ReObj.cbStruct := Sizeof(ReObj);
+  OleCheck(OleObject.GetUserClassID(ReObj.clsid));
+  ReObj.cp := REO_CP_SELECTION;
+  ReObj.dvaspect := DVASPECT_CONTENT;
+  ReObj.dwFlags := REO_STATIC or REO_BELOWBASELINE;
+  ReObj.dwUser := 0;
+  ReObj.poleobj := OleObject;
+  ReObj.polesite := OleSite;
+  ReObj.pstg := Storage;
+  ReObj.sizel.cx := 0;
+  ReObj.sizel.cy := 0;
+
+  ReOle.InsertObject(ReObj);
+  Result := True;
+end;
+{
+
+
+RichEx.InsertBitmap(RichEdit1.Handle, ExtractFilePath(ParamStr(0)) + 'e.bmp');
+RichEx.InsertBitmap(RichEdit1.Handle, Image1.Picture.Bitmap);
+RichEx.InsertGif(RichEdit1.Handle, ExtractFilePath(ParamStr(0)) + 'c.gif');
+
+}
+
+end.

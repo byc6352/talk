@@ -1,0 +1,40 @@
+unit uDM;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, System.Win.ScktComp,uConfig;
+
+type
+  Tdm = class(TDataModule)
+    ssOrder: TServerSocket;
+    ssData1: TServerSocket;
+    procedure DataModuleCreate(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  dm: Tdm;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+{$R *.dfm}
+uses
+  uMain;
+
+procedure Tdm.DataModuleCreate(Sender: TObject);
+begin
+  ssorder.Port:=uConfig.port_order;
+  ssorder.Open;
+  ssdata1.Port:=uConfig.port_data;
+  ssdata1.Open;
+  //uMain.fMain.LogMain('ÕìÌıÃüÁî¶Ë¿Ú£º'+inttostr(ssorder.Port));
+  //uMain.fMain.LogMain('ÕìÌıÊı¾İ¶Ë¿Ú£º'+inttostr(ssorder.Port));
+end;
+
+end.
