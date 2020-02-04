@@ -47,15 +47,18 @@ var
   selStart:integer;
 begin
 
-  edtInfo.Lines.Add(msg);
-  selStart:=length(edtInfo.Lines.Text)-length(msg)-4;
+  //edtInfo.Lines.Add(msg);
+  //selStart:=length(edtInfo.Text)-length(msg)-2;
+  selStart:=length(edtInfo.Text);
+  //edtInfo.Lines.Add(msg);
+  edtInfo.Text:=edtInfo.Text+msg+#13#10;
   edtINfo.SelStart:=selStart;
-  edtInfo.SelLength:=length(msg);
+  edtInfo.SelLength:=length(msg)+2;
   edtInfo.SelAttributes.Size:=12;
   edtInfo.SelAttributes.Color:=clBlue;
   edtInfo.SelStart := 0;
   edtInfo.SelLength := 0;
-
+  bar1.Panels[1].Text:='selStart='+inttostr(selStart)+';len='+inttostr(length(msg)+2)+';text length='+inttostr(length(edtInfo.Text));
 end;
 procedure TfMain.MSGmain(friendID:integer;msg:ansistring);
 var
@@ -135,15 +138,18 @@ var
 begin
 
   msg:=Log(str);
-  edtInfo.Lines.Add(msg);
 
-  selStart:=length(edtInfo.Lines.Text)-length(msg)-2;
+
+  selStart:=length(edtInfo.Text);
+  //edtInfo.Lines.Add(msg);
+  edtInfo.Text:=edtInfo.Text+msg+#13#10;
   edtINfo.SelStart:=selStart;
-  edtInfo.SelLength:=length(msg);
+  edtInfo.SelLength:=length(msg)+2;
   edtInfo.SelAttributes.Size:=8;
   edtInfo.SelAttributes.Color:=clGray;
   edtInfo.SelStart := 0;
   edtInfo.SelLength := 0;
+  bar1.Panels[0].Text:='selStart='+inttostr(selStart)+';len='+inttostr(length(msg)+2)+';text length='+inttostr(length(edtInfo.Text));
 end;
 
 procedure TfMain.btnCloseClick(Sender: TObject);
