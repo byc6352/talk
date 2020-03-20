@@ -2,17 +2,17 @@
 <BorlandProject>
 	<Transactions>
     <Transaction>2020/02/01 10:02:59.000.845,=D:\works\delphi\Unit1.pas</Transaction>
-    <Transaction>2020/02/01 10:04:08.000.966,D:\works\delphi\Unit1.dfm=D:\works\delphi\talk\talkrepeater\uMain.dfm</Transaction>
-    <Transaction>2020/02/01 10:04:08.000.966,D:\works\delphi\Unit1.pas=D:\works\delphi\talk\talkrepeater\uMain.pas</Transaction>
-    <Transaction>2020/02/01 10:04:25.000.575,D:\works\delphi\Project1.dproj=D:\works\delphi\talk\talkrepeater\talkrepeater.dproj</Transaction>
+    <Transaction>2020/02/01 10:04:08.000.966,D:\works\delphi\talk\talkrepeater\uMain.pas=D:\works\delphi\Unit1.pas</Transaction>
+    <Transaction>2020/02/01 10:04:08.000.966,D:\works\delphi\talk\talkrepeater\uMain.dfm=D:\works\delphi\Unit1.dfm</Transaction>
+    <Transaction>2020/02/01 10:04:25.000.575,D:\works\delphi\talk\talkrepeater\talkrepeater.dproj=D:\works\delphi\Project1.dproj</Transaction>
     <Transaction>2020/02/01 10:50:14.000.478,=D:\works\delphi\talk\talkrepeater\Unit1.pas</Transaction>
-    <Transaction>2020/02/01 10:50:43.000.606,D:\works\delphi\talk\talkrepeater\Unit1.pas=D:\works\delphi\talk\talkrepeater\uDM.pas</Transaction>
-    <Transaction>2020/02/01 10:50:43.000.606,D:\works\delphi\talk\talkrepeater\Unit1.dfm=D:\works\delphi\talk\talkrepeater\uDM.dfm</Transaction>
+    <Transaction>2020/02/01 10:50:43.000.606,D:\works\delphi\talk\talkrepeater\uDM.pas=D:\works\delphi\talk\talkrepeater\Unit1.pas</Transaction>
+    <Transaction>2020/02/01 10:50:43.000.606,D:\works\delphi\talk\talkrepeater\uDM.dfm=D:\works\delphi\talk\talkrepeater\Unit1.dfm</Transaction>
     <Transaction>2020/02/01 10:56:47.000.698,=D:\works\delphi\talk\talkrepeater\Unit1.pas</Transaction>
-    <Transaction>2020/02/01 10:57:10.000.274,D:\works\delphi\talk\talkrepeater\Unit1.pas=D:\works\delphi\talk\talkrepeater\uConfig.pas</Transaction>
+    <Transaction>2020/02/01 10:57:10.000.274,D:\works\delphi\talk\talkrepeater\uConfig.pas=D:\works\delphi\talk\talkrepeater\Unit1.pas</Transaction>
     <Transaction>2020/02/01 13:30:20.000.507,=D:\works\delphi\talk\talkrepeater\Unit1.pas</Transaction>
-    <Transaction>2020/02/01 13:30:33.000.918,D:\works\delphi\talk\talkrepeater\Unit1.pas=D:\works\delphi\talk\talkrepeater\uLog.pas</Transaction>
+    <Transaction>2020/02/01 13:30:33.000.918,D:\works\delphi\talk\talkrepeater\uLog.pas=D:\works\delphi\talk\talkrepeater\Unit1.pas</Transaction>
     <Transaction>2020/02/01 14:05:56.000.890,=D:\works\delphi\talk\talkrepeater\Unit1.pas</Transaction>
-    <Transaction>2020/02/01 14:06:18.000.038,D:\works\delphi\talk\talkrepeater\Unit1.pas=D:\works\delphi\talk\talkrepeater\uOrder.pas</Transaction>
+    <Transaction>2020/02/01 14:06:18.000.038,D:\works\delphi\talk\talkrepeater\uOrder.pas=D:\works\delphi\talk\talkrepeater\Unit1.pas</Transaction>
   </Transactions>
 </BorlandProject>

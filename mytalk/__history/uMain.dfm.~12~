@@ -1,0 +1,162 @@
+object fMain: TfMain
+  Left = 0
+  Top = 0
+  Caption = #36731#32842'v1.01'
+  ClientHeight = 514
+  ClientWidth = 635
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  OnCreate = FormCreate
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 13
+  object Splitter1: TSplitter
+    Left = 0
+    Top = 381
+    Width = 635
+    Height = 3
+    Cursor = crVSplit
+    Align = alBottom
+    ExplicitLeft = -1
+    ExplicitTop = 364
+  end
+  object Bar1: TStatusBar
+    Left = 0
+    Top = 495
+    Width = 635
+    Height = 19
+    Panels = <
+      item
+        Width = 400
+      end
+      item
+        Width = 50
+      end>
+    ExplicitTop = 496
+  end
+  object GroupBox2: TGroupBox
+    Left = 0
+    Top = 0
+    Width = 635
+    Height = 41
+    Align = alTop
+    Caption = #23545#26041#32534#21495
+    TabOrder = 1
+    ExplicitTop = -6
+    object edtFriendID: TEdit
+      Left = 2
+      Top = 15
+      Width = 631
+      Height = 21
+      Align = alTop
+      TabOrder = 0
+      Text = '1001'
+    end
+  end
+  object Panel2: TPanel
+    Left = 0
+    Top = 384
+    Width = 635
+    Height = 111
+    Align = alBottom
+    TabOrder = 2
+    ExplicitLeft = -8
+    ExplicitTop = 375
+    object Panel1: TPanel
+      Left = 1
+      Top = 69
+      Width = 633
+      Height = 41
+      Align = alBottom
+      TabOrder = 0
+      ExplicitLeft = 2
+      ExplicitTop = 64
+      object btnSendMSG: TButton
+        Left = 557
+        Top = 1
+        Width = 75
+        Height = 39
+        Align = alRight
+        Caption = #21457#36865
+        TabOrder = 0
+        OnClick = btnSendMSGClick
+        ExplicitLeft = 541
+      end
+      object btnClose: TButton
+        Left = 76
+        Top = 1
+        Width = 75
+        Height = 39
+        Align = alLeft
+        Caption = #20851#38381
+        TabOrder = 1
+        OnClick = btnCloseClick
+      end
+      object btnSendFile: TButton
+        Left = 1
+        Top = 1
+        Width = 75
+        Height = 39
+        Align = alLeft
+        Caption = #21457#36865#25991#20214
+        TabOrder = 2
+      end
+    end
+    object edtInput: TRichEdit
+      Left = 1
+      Top = 1
+      Width = 633
+      Height = 68
+      Align = alClient
+      Font.Charset = GB2312_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      ScrollBars = ssBoth
+      TabOrder = 1
+      Zoom = 100
+      ExplicitLeft = 0
+      ExplicitTop = 3
+    end
+  end
+  object Panel3: TPanel
+    Left = 0
+    Top = 41
+    Width = 635
+    Height = 340
+    Align = alClient
+    Caption = 'Panel3'
+    TabOrder = 3
+    ExplicitLeft = 24
+    ExplicitTop = 200
+    ExplicitWidth = 603
+    ExplicitHeight = 161
+    object edtInfo: TRichEdit
+      Left = 1
+      Top = 1
+      Width = 633
+      Height = 338
+      Align = alClient
+      Font.Charset = GB2312_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      ScrollBars = ssBoth
+      TabOrder = 0
+      Zoom = 100
+      ExplicitLeft = 2
+      ExplicitTop = 9
+      ExplicitWidth = 601
+      ExplicitHeight = 136
+    end
+  end
+end

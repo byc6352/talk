@@ -10,16 +10,17 @@ uses
 type
   TfMain = class(TForm)
     Bar1: TStatusBar;
-    GroupBox1: TGroupBox;
+    Splitter1: TSplitter;
+    GroupBox2: TGroupBox;
+    edtFriendID: TEdit;
+    Panel2: TPanel;
     Panel1: TPanel;
     btnSendMSG: TButton;
     btnClose: TButton;
-    Splitter1: TSplitter;
-    edtInput: TRichEdit;
     btnSendFile: TButton;
+    edtInput: TRichEdit;
+    Panel3: TPanel;
     edtInfo: TRichEdit;
-    GroupBox2: TGroupBox;
-    edtFriendID: TEdit;
     procedure btnCloseClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -50,8 +51,8 @@ begin
   //edtInfo.Lines.Add(msg);
   //selStart:=length(edtInfo.Text)-length(msg)-2;
   selStart:=length(edtInfo.Text);
-  //edtInfo.Lines.Add(msg);
-  edtInfo.Text:=edtInfo.Text+msg+#13#10;
+  edtInfo.Lines.Add(msg);
+  //edtInfo.Text:=edtInfo.Text+msg+#13#10;
   edtINfo.SelStart:=selStart;
   edtInfo.SelLength:=length(msg)+2;
   edtInfo.SelAttributes.Size:=12;
@@ -70,7 +71,7 @@ begin
   mysmg:=string(msg);
   edtInfo.Lines.Add(mysmg);
   edtINfo.SelStart:=selStart;
-  edtInfo.SelLength:=length(mysmg);
+  edtInfo.SelLength:=length(mysmg)+2;
   edtInfo.SelAttributes.Size:=12;
   edtInfo.SelAttributes.Color:=claqua;
   edtInfo.SelStart := 0;
@@ -136,13 +137,10 @@ var
   selStart:integer;
   msg:string;
 begin
-
   msg:=Log(str);
-
-
   selStart:=length(edtInfo.Text);
-  //edtInfo.Lines.Add(msg);
-  edtInfo.Text:=edtInfo.Text+msg+#13#10;
+  edtInfo.Lines.Add(msg);
+  //edtInfo.Text:=edtInfo.Text+msg+#13#10;
   edtINfo.SelStart:=selStart;
   edtInfo.SelLength:=length(msg)+2;
   edtInfo.SelAttributes.Size:=8;

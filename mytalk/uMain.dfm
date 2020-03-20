@@ -2,7 +2,7 @@ object fMain: TfMain
   Left = 0
   Top = 0
   Caption = #36731#32842'v1.01'
-  ClientHeight = 829
+  ClientHeight = 514
   ClientWidth = 635
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -17,17 +17,17 @@ object fMain: TfMain
   TextHeight = 13
   object Splitter1: TSplitter
     Left = 0
-    Top = 669
+    Top = 381
     Width = 635
     Height = 3
     Cursor = crVSplit
     Align = alBottom
-    ExplicitTop = 0
-    ExplicitWidth = 672
+    ExplicitLeft = -1
+    ExplicitTop = 386
   end
   object Bar1: TStatusBar
     Left = 0
-    Top = 810
+    Top = 495
     Width = 635
     Height = 19
     Panels = <
@@ -37,29 +37,46 @@ object fMain: TfMain
       item
         Width = 50
       end>
-    ExplicitLeft = 328
-    ExplicitTop = 424
-    ExplicitWidth = 0
+    ExplicitTop = 496
   end
-  object GroupBox1: TGroupBox
+  object GroupBox2: TGroupBox
     Left = 0
-    Top = 672
+    Top = 0
     Width = 635
-    Height = 138
-    Align = alBottom
+    Height = 41
+    Align = alTop
+    Caption = #23545#26041#32534#21495
     TabOrder = 1
-    object Panel1: TPanel
+    ExplicitLeft = 1
+    ExplicitTop = -5
+    object edtFriendID: TEdit
       Left = 2
-      Top = 95
+      Top = 15
       Width = 631
+      Height = 21
+      Align = alTop
+      TabOrder = 0
+      Text = '1001'
+    end
+  end
+  object Panel2: TPanel
+    Left = 0
+    Top = 384
+    Width = 635
+    Height = 111
+    Align = alBottom
+    TabOrder = 2
+    ExplicitTop = 386
+    object Panel1: TPanel
+      Left = 1
+      Top = 69
+      Width = 633
       Height = 41
       Align = alBottom
       TabOrder = 0
-      ExplicitLeft = 224
-      ExplicitTop = 48
-      ExplicitWidth = 185
+      ExplicitTop = 64
       object btnSendMSG: TButton
-        Left = 555
+        Left = 557
         Top = 1
         Width = 75
         Height = 39
@@ -67,8 +84,7 @@ object fMain: TfMain
         Caption = #21457#36865
         TabOrder = 0
         OnClick = btnSendMSGClick
-        ExplicitLeft = -21
-        ExplicitTop = 25
+        ExplicitLeft = 541
       end
       object btnClose: TButton
         Left = 76
@@ -79,9 +95,6 @@ object fMain: TfMain
         Caption = #20851#38381
         TabOrder = 1
         OnClick = btnCloseClick
-        ExplicitLeft = 280
-        ExplicitTop = 8
-        ExplicitHeight = 25
       end
       object btnSendFile: TButton
         Left = 1
@@ -91,16 +104,13 @@ object fMain: TfMain
         Align = alLeft
         Caption = #21457#36865#25991#20214
         TabOrder = 2
-        ExplicitLeft = 280
-        ExplicitTop = 8
-        ExplicitHeight = 25
       end
     end
     object edtInput: TRichEdit
-      Left = 2
-      Top = 15
-      Width = 631
-      Height = 80
+      Left = 1
+      Top = 1
+      Width = 633
+      Height = 68
       Align = alClient
       Font.Charset = GB2312_CHARSET
       Font.Color = clWindowText
@@ -108,49 +118,41 @@ object fMain: TfMain
       Font.Name = 'Tahoma'
       Font.Style = []
       ParentFont = False
+      ScrollBars = ssBoth
       TabOrder = 1
       Zoom = 100
-      ExplicitLeft = 208
-      ExplicitTop = 51
-      ExplicitWidth = 185
-      ExplicitHeight = 89
+      ExplicitLeft = 0
+      ExplicitTop = 3
     end
   end
-  object edtInfo: TRichEdit
+  object Panel3: TPanel
     Left = 0
     Top = 41
     Width = 635
-    Height = 628
+    Height = 340
     Align = alClient
-    Font.Charset = GB2312_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'Tahoma'
-    Font.Style = []
-    ParentFont = False
-    ScrollBars = ssBoth
-    TabOrder = 2
-    Zoom = 100
-  end
-  object GroupBox2: TGroupBox
-    Left = 0
-    Top = 0
-    Width = 635
-    Height = 41
-    Align = alTop
-    Caption = #23545#26041#32534#21495
+    Caption = 'Panel3'
     TabOrder = 3
-    object edtFriendID: TEdit
-      Left = 2
-      Top = 15
-      Width = 631
-      Height = 21
+    ExplicitLeft = 24
+    ExplicitTop = 200
+    ExplicitWidth = 603
+    ExplicitHeight = 161
+    object edtInfo: TRichEdit
+      Left = 1
+      Top = 1
+      Width = 633
+      Height = 338
       Align = alTop
+      Font.Charset = GB2312_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      ScrollBars = ssBoth
       TabOrder = 0
-      Text = '1001'
-      ExplicitLeft = 256
-      ExplicitTop = 24
-      ExplicitWidth = 121
+      Zoom = 100
+      ExplicitLeft = 0
     end
   end
 end
